@@ -8,6 +8,7 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="simulation_engine.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -358,8 +359,8 @@ const BASELINE_KPI = {
   retention: 70.57, cancelArr: -523, roi: 3.67,
 };
 
-const DEFAULTS_2021 = { discVar:46,discFixed:6,tryVar:34,tryFixed:6,buyVar:94,buyFixed:6,useVar:36,useFixed:6,renewVar:12,renewFixed:4 };
-const DEFAULTS_2022 = { discVar:56,discFixed:12,tryVar:46,tryFixed:12,buyVar:78,buyFixed:18,useVar:38,useFixed:12,renewVar:16,renewFixed:12 };
+const DEFAULTS_2021 = { discVar:0,discFixed:0,tryVar:0,tryFixed:0,buyVar:0,buyFixed:0,useVar:0,useFixed:0,renewVar:0,renewFixed:0 };
+const DEFAULTS_2022 = { discVar:0,discFixed:0,tryVar:0,tryFixed:0,buyVar:0,buyFixed:0,useVar:0,useFixed:0,renewVar:0,renewFixed:0 };
 
 // Budget Allocation Chart Component
 function BudgetChart({ history }) {
@@ -741,6 +742,7 @@ function App() {
     const [showFinalScreen, setShowFinalScreen] = useState(false);
     const [activeReportTab, setActiveReportTab] = useState('input');
     const [hasStarted, setHasStarted] = useState(false);
+    const engine = useRef(new DDOMEngine());
 
     const quarterNum = results.length;
     const year = quarterNum < 4 ? 2021 : 2022;
@@ -771,38 +773,43 @@ function App() {
         return prevAlloc[k] || 0;
     };
 
-    const handleCommit = async () => {
+    const handleCommit = () => {
         if (totalSpend !== targetBudget || loading) return;
         setLoading(true);
+        
+        // Use local JS engine instead of fetch
+        const result = engine.current.simulate(alloc);
+        
+        // Update history and results
         const newHistory = [...history, alloc];
-        try {
-            const res = await fetch('/api/simulate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ allocations: newHistory })
-            });
-            const data = await res.json();
-            setHistory(newHistory);
-            const mapped = data.results.map(r => ({
-                ...r,
-                netNewArr: r.arr ?? r.netNewArr,
-                // Keep ROI as a number for formatting — don't stringify here
-                roi: r.roi !== undefined ? parseFloat(r.roi) : null,
-            }));
-            setResults(mapped);
-            setActivePhase(0);
-            setHypothesis('');
-            // If this was the last quarter, show the results first before final screen
-            if (newHistory.length === 8) {
-                setShowFinalScreen(false);
-            }
-        } catch(e) {
-            alert('API Error: Could not connect. Is the server running?');
+        setHistory(newHistory);
+        
+        const mapped = engine.current.get_results().map(r => ({
+            ...r,
+            netNewArr: r.arr ?? r.netNewArr,
+            roi: r.roi !== undefined ? parseFloat(r.roi) : null,
+        }));
+        
+        setResults(mapped);
+        setActivePhase(0);
+        setHypothesis('');
+        
+        if (newHistory.length === 8) {
+            setShowFinalScreen(false);
         }
+        
         setLoading(false);
     };
 
-    const reset = () => { setResults([]); setHistory([]); setAlloc(DEFAULTS_2021); setActivePhase(0); setHypothesis(''); setShowFinalScreen(false); };
+    const reset = () => { 
+        engine.current.reset();
+        setResults([]); 
+        setHistory([]); 
+        setAlloc(DEFAULTS_2021); 
+        setActivePhase(0); 
+        setHypothesis(''); 
+        setShowFinalScreen(false); 
+    };
 
     // Game Over (after Q4 2021 midpoint check)
     if (results.length === 4 && results[3].netNewArr < 500) {

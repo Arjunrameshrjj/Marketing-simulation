@@ -12,24 +12,19 @@ This simulation is based on real marketing principles and challenges students to
 
 ## 🚀 Quick Start
 
-### Installation
+### Quick Start
 
 1. **Clone or download this repository**
+2. **Open `index.html`** in any modern web browser.
 
-2. **Install Python 3.8+** (if not already installed)
+No installation or server is required. This is a pure static application.
 
-3. **Install dependencies:**
-```bash
-pip install -r requirements.txt
-```
+## 🌐 Deployment
 
-### Running the Simulation
-
-```bash
-streamlit run app.py
-```
-
-The application will open in your default web browser at `http://localhost:8501`
+Since this is a static site, you can host it for free on:
+- **GitHub Pages**: Push this repo and enable Pages in settings.
+- **Render**: Connect your repo and choose **Static Site**.
+- **Netlify/Vercel**: Drag and drop the folder or connect your repo.
 
 ## 🎯 How to Use
 
@@ -202,10 +197,10 @@ The simulation uses a sophisticated model that:
 
 ```
 marketing_simulation/
-├── app.py                  # Streamlit web application
-├── simulation_engine.py    # Core simulation logic
-├── requirements.txt        # Python dependencies
-├── README.md              # This file
+├── index.html              # Main application (React Frontend)
+├── simulation_engine.js    # Core simulation logic (JavaScript)
+├── README.md               # This file
+└── examples/               # Example strategies
 └── examples/              # Example strategies
     ├── winning_strategy.json
     └── analysis_notebook.ipynb
@@ -242,7 +237,7 @@ After completing this simulation, students will:
 ## 🐛 Troubleshooting
 
 **Issue**: Application won't start
-- **Solution**: Ensure Python 3.8+ installed, run `pip install -r requirements.txt`
+- **Solution**: Ensure you are opening `index.html` in a modern browser (Chrome, Edge, Safari).
 
 **Issue**: Budget won't validate
 - **Solution**: Total must equal exactly $250M (2021) or $300M (2022)
